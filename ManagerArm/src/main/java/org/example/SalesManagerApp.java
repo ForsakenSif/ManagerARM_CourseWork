@@ -7,6 +7,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -69,11 +70,30 @@ public class SalesManagerApp {
         filterPanel.add(new JLabel("Поиск:"));
         filterPanel.add(searchField);
 
+        // Кнопки для добавления, редактирования и удаления
+
+
 
         formPanel.add(nameField);
         formPanel.add(emailField);
         formPanel.add(addButton);
         formPanel.add(editButton);
+        JButton deleteButton = new JButton("Удалить");
+        formPanel.add(deleteButton);
+
+        deleteButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int confirmation = JOptionPane.showConfirmDialog(panel, "Вы уверены, что хотите удалить клиента?", "Удалить", JOptionPane.YES_NO_OPTION);
+                if (confirmation == JOptionPane.YES_OPTION) {
+                    clients.remove(selectedRow);
+                    model.removeRow(selectedRow);
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Выберите клиента для удаления!", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
 
         // Поиск по имени или email
         searchField.addKeyListener(new KeyAdapter() {
@@ -91,6 +111,8 @@ public class SalesManagerApp {
                 }
             }
         });
+
+
 
         filterButton.addActionListener(e -> {
             // Для фильтрации по другим параметрам (например, статусу)
@@ -191,7 +213,7 @@ public class SalesManagerApp {
     // Вкладка "Товары"
     private JPanel createProductsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        DefaultTableModel model = new DefaultTableModel(new String[]{"Название", "Цена", "Категория"}, 0);
+        DefaultTableModel model = new DefaultTableModel(new String[]{"Название", "Цена", "Категория", "Остаток"}, 0);
         JTable table = new JTable(model);
 
         JPanel formPanel = new JPanel(new GridLayout(1, 5));
@@ -201,9 +223,13 @@ public class SalesManagerApp {
         JTextField priceField = new JTextField();
         priceField.setForeground(Color.GRAY);
         priceField.setText("Цена");
+        JTextField quantityField = new JTextField();
+        quantityField.setForeground(Color.GRAY);
+        quantityField.setText("Количество");
         JComboBox<Category> categoryBox = new JComboBox<>(Category.values());
         JButton addButton = new JButton("Добавить");
         JButton editButton = new JButton("Изменить");
+
 
         // Панель для поиска и фильтра
         JPanel filterPanel = new JPanel();
@@ -216,6 +242,7 @@ public class SalesManagerApp {
         filterPanel.add(new JLabel("Категория:"));
         filterPanel.add(filterCategory);
         filterPanel.add(filterButton);
+
 
         // Поиск по названию товара
         searchField.addKeyListener(new KeyAdapter() {
@@ -263,10 +290,26 @@ public class SalesManagerApp {
 
         formPanel.add(nameField);
         formPanel.add(priceField);
-        formPanel.add(categoryBox);
+        formPanel.add(quantityField);
+
         formPanel.add(categoryBox);
         formPanel.add(addButton);
         formPanel.add(editButton);
+        JButton deleteButton = new JButton("Удалить");
+        formPanel.add(deleteButton);
+
+        deleteButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int confirmation = JOptionPane.showConfirmDialog(panel, "Вы уверены, что хотите удалить товар?", "Удалить", JOptionPane.YES_NO_OPTION);
+                if (confirmation == JOptionPane.YES_OPTION) {
+                    products.remove(selectedRow);
+                    model.removeRow(selectedRow);
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Выберите товар для удаления!", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         // Когда поле получает фокус, убираем placeholder
         nameField.addFocusListener(new FocusAdapter() {
@@ -309,17 +352,40 @@ public class SalesManagerApp {
             }
         });
 
+        // Когда поле получает фокус, убираем placeholder
+        quantityField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+
+                if (quantityField.getText().equals("Количество")) {
+                    quantityField.setText(""); // Очищаем текст при фокусе
+                    quantityField.setForeground(Color.BLACK); // Цвет текста
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+
+                if (quantityField.getText().isEmpty()) {
+                    quantityField.setText("Количество"); // Восстанавливаем placeholder, если текст пустой
+                    quantityField.setForeground(Color.GRAY); // Цвет для подсказки
+                }
+            }
+        });
+
         addButton.addActionListener(e -> {
             String name = nameField.getText();
             try {
                 double price = Double.parseDouble(priceField.getText());
+                int quantity = Integer.parseInt(quantityField.getText());
                 Category category = (Category) categoryBox.getSelectedItem();
-                Product newProduct = new Product(name, price, category);
+                Product newProduct = new Product(name, price, category,quantity);
                 products.add(newProduct);
-                model.addRow(new Object[]{name, price, category});
+                model.addRow(new Object[]{name, price, category, quantity});
                 productModel.addElement(newProduct); // Обновление выпадающего списка
                 nameField.setText("");
                 priceField.setText("");
+                quantityField.setText("");
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(frame, "Введите корректную цену!", "Ошибка", JOptionPane.ERROR_MESSAGE);
             }
@@ -364,6 +430,8 @@ public class SalesManagerApp {
         JComboBox<Product> productBox = new JComboBox<>(productModel);
         JComboBox<STATUS> statusBox = new JComboBox<>(STATUS.values());
         JTextField quantityField = new JTextField();
+
+        JButton editStatusButton = new JButton("Стадия");
         quantityField.setForeground(Color.GRAY);
         quantityField.setText("Количество");
         JButton addButton = new JButton("Добавить");
@@ -373,6 +441,23 @@ public class SalesManagerApp {
         formPanel.add(quantityField);
         formPanel.add(statusBox);
         formPanel.add(addButton);
+
+        formPanel.add(editStatusButton);
+        JButton deleteButton = new JButton("Удалить");
+        formPanel.add(deleteButton);
+
+        deleteButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int confirmation = JOptionPane.showConfirmDialog(panel, "Вы уверены, что хотите удалить сделку?", "Удалить", JOptionPane.YES_NO_OPTION);
+                if (confirmation == JOptionPane.YES_OPTION) {
+                    sales.remove(selectedRow);
+                    model.removeRow(selectedRow);
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Выберите сделку для удаления!", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         // Когда поле получает фокус, убираем placeholder
         quantityField.addFocusListener(new FocusAdapter() {
@@ -392,6 +477,28 @@ public class SalesManagerApp {
                     quantityField.setForeground(Color.GRAY); // Цвет для подсказки
                 }
 
+            }
+        });
+
+        // Смена категории у выбранного продукта
+        editStatusButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                Product selectedProduct = products.get(selectedRow);
+                STATUS newStatus = (STATUS) JOptionPane.showInputDialog(panel,
+                        "Cмена стадии:",
+                        "Выберите стадию",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        STATUS.values(),
+                        selectedProduct.getCategory());
+
+                if (newStatus != null) {
+                    selectedProduct.setStatus(newStatus);
+                    model.setValueAt(newStatus, selectedRow, 4);  // Обновляем категорию в таблице
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Выберите сделку для смены стадии!", "Ошибка", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -442,6 +549,21 @@ public class SalesManagerApp {
         formPanel.add(nameField);
         formPanel.add(contactField);
         formPanel.add(addButton);
+        JButton deleteButton = new JButton("Удалить");
+        formPanel.add(deleteButton);
+
+        deleteButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int confirmation = JOptionPane.showConfirmDialog(panel, "Вы уверены, что хотите удалить поставщика?", "Удалить", JOptionPane.YES_NO_OPTION);
+                if (confirmation == JOptionPane.YES_OPTION) {
+                    suppliers.remove(selectedRow);
+                    model.removeRow(selectedRow);
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Выберите поставщика для удаления!", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         nameField.addFocusListener(new FocusAdapter() {
             @Override
@@ -518,6 +640,21 @@ public class SalesManagerApp {
         formPanel.add(nameField);
         formPanel.add(addressField);
         formPanel.add(addButton);
+        JButton deleteButton = new JButton("Удалить");
+        formPanel.add(deleteButton);
+
+        deleteButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int confirmation = JOptionPane.showConfirmDialog(panel, "Вы уверены, что хотите удалить склад?", "Удалить", JOptionPane.YES_NO_OPTION);
+                if (confirmation == JOptionPane.YES_OPTION) {
+                    warehouses.remove(selectedRow);
+                    model.removeRow(selectedRow);
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Выберите склад для удаления!", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         nameField.addFocusListener(new FocusAdapter() {
             @Override
@@ -614,11 +751,14 @@ public class SalesManagerApp {
         private String name;
         private double price;
         private Category category;
+        private int quantity;  // Количество оставшегося товара
+        private STATUS status;
 
-        public Product(String name, double price, Category category) {
+        public Product(String name, double price, Category category, int quantity) {
             this.name = name;
             this.price = price;
             this.category = category;
+            this.quantity = quantity;
         }
 
         public String getName() {
@@ -643,6 +783,18 @@ public class SalesManagerApp {
 
         public void setCategory(Category category) {
             this.category = category;
+        }
+
+        public void setStatus(STATUS status) {
+            this.status = status;
+        }
+
+        public int getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(int quantity) {
+            this.quantity = quantity;
         }
 
         // Переопределение метода toString для вывода названия и цены товара
@@ -709,6 +861,24 @@ public class SalesManagerApp {
         public String toString() {
             return name + " (" + contact + ")";
         }
+    }
+
+    public class DataManager {
+
+        private static final String FILE_NAME = "products.dat"; // Файл для сохранения данных
+
+        // Сохранение списка продуктов в файл
+        public static void saveProducts(List<Product> products) {
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
+                oos.writeObject(products);
+                System.out.println("Данные сохранены.");
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Ошибка при сохранении данных.");
+            }
+        }
+
+        
     }
 
 
