@@ -216,7 +216,7 @@ public class SalesManagerApp {
         DefaultTableModel model = new DefaultTableModel(new String[]{"Название", "Цена", "Категория", "Остаток"}, 0);
         JTable table = new JTable(model);
 
-        JPanel formPanel = new JPanel(new GridLayout(1, 5));
+        JPanel formPanel = new JPanel(new GridLayout(1, 6));
         JTextField nameField = new JTextField();
         nameField.setForeground(Color.GRAY);
         nameField.setText("Название");
@@ -242,6 +242,24 @@ public class SalesManagerApp {
         filterPanel.add(new JLabel("Категория:"));
         filterPanel.add(filterCategory);
         filterPanel.add(filterButton);
+        JButton resetFilterButton = new JButton("Сбросить фильтр");
+        filterPanel.add(resetFilterButton);
+
+        resetFilterButton.addActionListener(e -> {
+            // Очищаем поле поиска
+            searchField.setText("");
+
+            // Сбрасываем выбранную категорию в "Все"
+            filterCategory.setSelectedItem("Все");
+
+            // Показываем все товары
+            model.setRowCount(0);
+            for (Product product : products) {
+                model.addRow(new Object[]{product.getName(), product.getPrice(), product.getCategory(), product.getQuantity()});
+            }
+        });
+
+
 
 
         // Поиск по названию товара
@@ -260,6 +278,7 @@ public class SalesManagerApp {
             }
         });
 
+
         // Фильтрация по категории
         filterButton.addActionListener(e -> {
             String searchText = searchField.getText().toLowerCase();
@@ -268,6 +287,7 @@ public class SalesManagerApp {
                     .filter(product -> (product.getCategory() == selectedCategory || selectedCategory == null)
                             && product.getName().toLowerCase().contains(searchText))
                     .collect(Collectors.toList());
+
             model.setRowCount(0); // Очищаем таблицу
             for (Product product : filteredProducts) {
                 model.addRow(new Object[]{product.getName(), product.getPrice(), product.getCategory()});
@@ -276,17 +296,7 @@ public class SalesManagerApp {
 
 
 
-        filterButton.addActionListener(e -> {
-            // Для фильтрации по другим параметрам (например, статусу)
-            String searchText = searchField.getText().toLowerCase();
-            List<Product> filteredProducts = products.stream()
-                    .filter(client -> client.getName().toLowerCase().contains(searchText))
-                    .collect(Collectors.toList());
-            model.setRowCount(0); // Очищаем таблицу
-            for (Product product : filteredProducts) {
-                model.addRow(new Object[]{product.getName()});
-            }
-        });
+
 
         formPanel.add(nameField);
         formPanel.add(priceField);
@@ -399,12 +409,15 @@ public class SalesManagerApp {
                     double newPrice = Double.parseDouble(priceField.getText());
                     Category newCategory = (Category) categoryBox.getSelectedItem();
                     Product product = products.get(selectedRow);
+                    int newQuantity = Integer.parseInt(quantityField.getText());
                     product.setName(newName);
                     product.setPrice(newPrice);
                     product.setCategory(newCategory);
+                    product.setQuantity(newQuantity);
                     model.setValueAt(newName, selectedRow, 0);
                     model.setValueAt(newPrice, selectedRow, 1);
                     model.setValueAt(newCategory, selectedRow, 2);
+                    model.setValueAt(newQuantity, selectedRow, 3);
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(frame, "Введите корректную цену!", "Ошибка", JOptionPane.ERROR_MESSAGE);
                 }
@@ -878,7 +891,7 @@ public class SalesManagerApp {
             }
         }
 
-        
+
     }
 
 
